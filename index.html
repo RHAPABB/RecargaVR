@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Recarga - Val Refeição &amp; Alimentação</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap');
+  :root{
+    --azul:#0B4DA2; --azul-esc:#073876; --azul-cl:#e8f0fb;
+    --amarelo:#FDB913; --amarelo-cl:#fff6dc;
+    --verde:#3AAA35; --verde-cl:#e9f7e8;
+    --borda:#dfe6ef; --texto:#21324a; --suave:#6b7c93;
+    --vermelho:#d63333; --laranja:#e07b1a; --laranja-cl:#fdeede;
+    --bg:#eef3fa;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Nunito','Quicksand','Segoe UI',sans-serif;color:var(--texto);background:var(--bg);font-size:14px;}
+  header{background:linear-gradient(120deg,var(--azul),var(--azul-esc));color:#fff;padding:20px 26px;display:flex;align-items:center;gap:18px;}
+  .logo{width:54px;height:54px;border-radius:50%;background:var(--amarelo);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 12px rgba(0,0,0,.18);flex:0 0 auto;}
+  header h1{margin:0;font-size:21px;font-weight:900;letter-spacing:.2px;}
+  header .sub{opacity:.9;font-size:13px;margin-top:3px;font-weight:600;}
+  .toolbar{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;background:#fff;padding:16px 26px;border-bottom:1px solid var(--borda);position:sticky;top:0;z-index:30;box-shadow:0 2px 10px rgba(11,77,162,.05);}
+  .fld{display:flex;flex-direction:column;gap:4px;}
+  .fld label{font-size:11px;text-transform:uppercase;color:var(--suave);font-weight:800;letter-spacing:.5px;}
+  .fld input,.fld select{padding:9px 12px;border:1.5px solid var(--borda);border-radius:12px;font-size:14px;min-width:130px;background:#fff;font-family:inherit;font-weight:600;color:var(--texto);}
+  .fld input:focus,.fld select:focus{outline:none;border-color:var(--azul);box-shadow:0 0 0 3px var(--azul-cl);}
+  .fld input[type=number]{width:100px;min-width:0;}
+  .spacer{flex:1;}
+  .btn{padding:10px 17px;border:none;border-radius:14px;font-size:13px;font-weight:800;cursor:pointer;color:#fff;background:var(--azul);font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:6px;}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(0,0,0,.15);}
+  .btn.verde{background:var(--verde);} .btn.amarelo{background:var(--amarelo);color:var(--azul-esc);}
+  .btn.cinza{background:#7689a0;} .btn.laranja{background:var(--laranja);}
+  .tabs{display:flex;gap:6px;background:#fff;padding:0 26px;border-bottom:1px solid var(--borda);flex-wrap:wrap;}
+  .tab{padding:14px 18px;cursor:pointer;border-bottom:3px solid transparent;color:var(--suave);font-weight:800;font-size:13.5px;border-radius:10px 10px 0 0;transition:.15s;}
+  .tab:hover{background:var(--azul-cl);color:var(--azul);}
+  .tab.active{color:var(--azul);border-bottom-color:var(--amarelo);background:var(--azul-cl);}
+  main{padding:22px 26px 70px;}
+  .panel{display:none;animation:fade .25s;}
+  .panel.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;}}
+  .cards{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:20px;}
+  .card{background:#fff;border:1px solid var(--borda);border-radius:18px;padding:16px 20px;min-width:165px;flex:1;box-shadow:0 3px 10px rgba(11,77,162,.06);}
+  .card .lbl{font-size:11px;text-transform:uppercase;color:var(--suave);font-weight:800;letter-spacing:.5px;}
+  .card .val{font-size:25px;font-weight:900;color:var(--azul);margin-top:5px;}
+  .card.verde{background:var(--verde-cl);border-color:#c6e8c4;} .card.verde .val{color:#2e8a2a;}
+  .card.amarelo{background:var(--amarelo-cl);border-color:#f3df9e;} .card.amarelo .val{color:#b8860b;}
+  .card.azul{background:var(--azul-cl);border-color:#c4daf6;}
+  table{border-collapse:separate;border-spacing:0;width:100%;background:#fff;border:1px solid var(--borda);border-radius:16px;overflow:hidden;}
+  th,td{padding:9px 11px;text-align:left;border-bottom:1px solid #eef2f7;font-size:13px;}
+  th{background:var(--azul);color:#fff;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;font-weight:800;position:sticky;top:0;}
+  th.mes{background:var(--azul-esc);}
+  tr:nth-child(even) td{background:#fafcff;}
+  tbody tr:hover td{background:var(--azul-cl);}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;}
+  td.center,th.center{text-align:center;}
+  .tot-row td{font-weight:900;background:var(--verde-cl)!important;border-top:2.5px solid var(--verde);color:#206b1d;}
+  .tablewrap{overflow-x:auto;border-radius:16px;box-shadow:0 3px 12px rgba(11,77,162,.06);}
+  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800;background:#eef2f7;color:#42546e;white-space:nowrap;}
+  .pill.uf{background:var(--azul-cl);color:var(--azul);}
+  .pill.sp{background:var(--amarelo-cl);color:#b8860b;}
+  .pill.def{background:var(--laranja-cl);color:var(--laranja);}
+  .dias-grid{display:flex;gap:4px;}
+  .dia-chk{width:30px;height:30px;border:1.5px solid var(--borda);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;font-weight:800;background:#fff;color:var(--suave);user-select:none;transition:.12s;}
+  .dia-chk.on{background:var(--azul);color:#fff;border-color:var(--azul);}
+  .dia-chk.wknd.on{background:var(--amarelo);color:var(--azul-esc);border-color:var(--amarelo);}
+  .hint{background:var(--amarelo-cl);border:1px solid #f3df9e;border-radius:14px;padding:12px 16px;font-size:13px;margin-bottom:18px;line-height:1.5;}
+  .hint b{color:var(--laranja);}
+  .aviso{background:var(--laranja-cl);border:1.5px solid #f0c89a;border-radius:14px;padding:12px 16px;font-size:13.5px;margin-bottom:18px;display:flex;align-items:center;gap:12px;font-weight:700;color:#9a4d09;}
+  .aviso button{margin-left:auto;}
+  input.cell{width:64px;padding:5px 7px;border:1.5px solid var(--borda);border-radius:9px;text-align:right;font-size:13px;font-family:inherit;}
+  input.celltxt,select.cellsel{width:100%;padding:5px 8px;border:1.5px solid var(--borda);border-radius:9px;font-size:13px;font-family:inherit;background:#fff;}
+  select.cellsel.def{border-color:var(--laranja);background:var(--laranja-cl);}
+  input.cell:focus,input.celltxt:focus,select.cellsel:focus{outline:none;border-color:var(--azul);}
+  .small{font-size:11px;color:var(--suave);}
+  .row-actions button{background:none;border:none;color:var(--vermelho);cursor:pointer;font-size:16px;}
+  .legend{font-size:12px;color:var(--suave);margin-top:12px;line-height:1.7;}
+  .legend b{color:var(--texto);}
+  .va-tag{color:#b8860b;font-weight:800;}
+  .pill.va-only{background:#fff6dc;color:#b8860b;border:1px solid #f0c050;}
+  @media print{.toolbar .btn,.tabs,.row-actions,.aviso button{display:none!important;} .panel{display:block!important;} header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🍽️</div>
+  <div>
+    <h1>Controle de Recarga — Val Refeição &amp; Alimentação</h1>
+    <div class="sub">Previsibilidade de pedidos · Julho a Dezembro de 2026 · APABB — Recursos Humanos / DP</div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="fld">
+    <label>VR — Refeição (R$/dia)</label>
+    <input type="number" id="rate" value="46" step="0.01" min="0">
+  </div>
+  <div class="fld">
+    <label>VA — Alimentação (R$/mês · só SP)</label>
+    <input type="number" id="vaSP" value="240" step="0.01" min="0">
+  </div>
+  <div class="fld">
+    <label>Mês de referência</label>
+    <select id="mesSel"></select>
+  </div>
+  <div class="fld">
+    <label>Filtrar NR / Local</label>
+    <select id="fNR"><option value="">Todos</option></select>
+  </div>
+  <div class="fld">
+    <label>Filtrar jornada</label>
+    <select id="fJor"><option value="">Todas</option></select>
+  </div>
+  <div class="fld">
+    <label>Buscar colaborador</label>
+    <input type="text" id="fNome" placeholder="Digite o nome...">
+  </div>
+  <div class="spacer"></div>
+  <div class="fld"><label>&nbsp;</label><button class="btn verde" id="btnSalvarMes">💾 Exportar mês selecionado</button></div>
+  <div class="fld"><label>&nbsp;</label><button class="btn cinza" id="btnBackup">⬇ Backup</button></div>
+  <div class="fld"><label>&nbsp;</label><button class="btn cinza" id="btnRestaurar">⬆ Restaurar</button><input type="file" id="fileInput" accept=".json" style="display:none"></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-p="mes">💳 Pedido do Mês</div>
+  <div class="tab" data-p="total">📊 Previsão Jul–Dez</div>
+  <div class="tab" data-p="nr">🏢 Resumo por NR</div>
+  <div class="tab" data-p="base">🗂️ Base de Colaboradores</div>
+  <div class="tab" data-p="feriados">📅 Feriados por UF</div>
+</div>
+
+<main>
+  <!-- PEDIDO TOTAL / PREVISÃO -->
+  <section class="panel" id="panel-total">
+    <div id="avisoDef"></div>
+    <div class="cards">
+      <div class="card azul"><div class="lbl">Colaboradores (filtro)</div><div class="val" id="tColab">—</div></div>
+      <div class="card"><div class="lbl">NRs / Locais</div><div class="val" id="tNR">—</div></div>
+      <div class="card amarelo"><div class="lbl">VA — Alimentação (SP) · período</div><div class="val" id="tVA">—</div></div>
+      <div class="card"><div class="lbl">VR — Refeição · período</div><div class="val" id="tVR">—</div></div>
+      <div class="card verde"><div class="lbl">TOTAL GERAL Jul–Dez</div><div class="val" id="tGeral">—</div></div>
+    </div>
+    <div style="margin-bottom:12px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn verde" id="btnAddTotal">➕ Adicionar colaborador</button>
+      <span class="small" style="align-self:center">Previsão de VR mês a mês (Jul–Dez). Use os filtros acima. NR editável aqui mesmo. <b>VA não aparece nesta visão</b> — consulte a aba Pedido do Mês para o total com VA.</span>
+    </div>
+    <div class="tablewrap"><table id="tblTotal"></table></div>
+    <div class="legend" id="legTotal"></div>
+  </section>
+
+  <!-- PEDIDO DO MES -->
+  <section class="panel active" id="panel-mes">
+    <div class="hint">Pedido do mês selecionado para enviar ao Financeiro. <b>VR (Refeição)</b> = dias da jornada no mês − feriados que caem na jornada. <b>VA (Alimentação) = R$ fixo somente para SP — SEDE (Matriz), SP e SEDE não têm VA para CE ou GO.</b> Use <b>Ajuste</b> para descontar férias, admissão parcial ou afastamento. <b>SEDE-CE e SEDE-GO seguem o calendário de feriados do Ceará e Goiás</b>, respectivamente.</div>
+    <div class="cards">
+      <div class="card"><div class="lbl">Mês</div><div class="val" id="mMes" style="font-size:19px">—</div></div>
+      <div class="card azul"><div class="lbl">Colaboradores</div><div class="val" id="mColab">—</div></div>
+      <div class="card"><div class="lbl">VR do mês</div><div class="val" id="mVR">—</div></div>
+      <div class="card amarelo"><div class="lbl">VA do mês (SP)</div><div class="val" id="mVA">—</div></div>
+      <div class="card verde"><div class="lbl">Total do mês</div><div class="val" id="mTot">—</div></div>
+    </div>
+    <div class="tablewrap"><table id="tblMes"></table></div>
+  </section>
+
+  <!-- RESUMO POR NR -->
+  <section class="panel" id="panel-nr">
+    <div class="hint">Consolidado por <b>NR / Local</b> no mês selecionado. Mostra feriados aplicáveis a cada estado.</div>
+    <div class="cards">
+      <div class="card"><div class="lbl">Mês</div><div class="val" id="nrMes" style="font-size:19px">—</div></div>
+      <div class="card verde"><div class="lbl">Total do mês (filtro)</div><div class="val" id="nrTot">—</div></div>
+    </div>
+    <div class="tablewrap"><table id="tblNR"></table></div>
+  </section>
+
+  <!-- BASE -->
+  <section class="panel" id="panel-base">
+    <div class="hint">Base editável. Selecione o <b>NR</b> (define a UF e o VA automaticamente) e clique nos dias para ajustar a <b>jornada</b>. Tudo recalcula na hora e fica salvo no navegador. Passe o mouse na ⓘ para ver o horário original.</div>
+    <div style="margin-bottom:12px"><button class="btn verde" id="btnAddBase">➕ Adicionar colaborador</button></div>
+    <div class="tablewrap"><table id="tblBase"></table></div>
+  </section>
+
+  <!-- FERIADOS -->
+  <section class="panel" id="panel-feriados">
+    <div class="hint"><b class="va-tag">Nacional</b> (UF em branco) aplica-se a todos; feriado de UF aplica-se só àquele estado. Um feriado só reduz o VR se cair em um dia da jornada do colaborador. <b>Edite, adicione ou remova</b> conforme feriados municipais. Data no formato AAAA-MM-DD.</div>
+    <div style="margin-bottom:12px"><button class="btn verde" id="btnAddFer">➕ Adicionar feriado</button></div>
+    <div class="tablewrap"><table id="tblFer"></table></div>
+    <div class="legend">
+      <b>Pré-carregados — Nacionais:</b> Independência (07/09), N. Sra. Aparecida (12/10), Finados (02/11), Proclamação da República (15/11), Consciência Negra (20/11), Natal (25/12).
+      <b>Estaduais:</b> SP — Revolução Constitucionalista (09/07); BA — Independência da Bahia (02/07); SE — Emancipação (08/07); RS — Revolução Farroupilha (20/09); PR — Emancipação (19/12); DF — Dia do Evangélico (30/11).
+      <br><b>Atenção:</b> feriados municipais não estão incluídos — adicione os da sua cidade quando necessário.
+    </div>
+  </section>
+</main>
+
+<script>
+const COLAB_SEED = [{"id":1,"nome":"ADRIANA N.","funcao":"ASSISTENTE SOCIAL","local":"Filial 16 - SE","uf":"SE","horarioDesc":"SEG A SEX - 09HS AS 15:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":2,"nome":"CICERA S.","funcao":"GERENTE DE NUCLEO","local":"Filial 16 - SE","uf":"SE","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":3,"nome":"JOCIMAR S.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 16 - SE","uf":"SE","horarioDesc":"SEG A SEX - 10HS AS 16:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":4,"nome":"JANAINA J.","funcao":"GERENTE DE NUCLEO","local":"SP","uf":"SP","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":5,"nome":"LARISSA N.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 09HS AS 18HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":6,"nome":"MARCIA N.","funcao":"ASSISTENTE SOCIAL","local":"SP","uf":"SP","horarioDesc":"SEG A SEX - 10:00 AS 17:00","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":7,"nome":"AGNES P.","funcao":"ASSISTENTE SOCIAL","local":"Filial 14 - SC","uf":"SC","horarioDesc":"SEG A SEX - REDUZIDO ÀS SEXTAS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":8,"nome":"MARIANE A.","funcao":"GERENTE DE NUCLEO","local":"Filial 14 - SC","uf":"SC","horarioDesc":"SEG A SEX - 09HS AS 18HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":9,"nome":"NATHALIA P.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 14 - SC","uf":"SC","horarioDesc":"SEG A SEX - 09HS AS 16HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":10,"nome":"FABIO A.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 13 - RS","uf":"RS","horarioDesc":"TER QUI E SEX - 09:00 AS 18:00 QUA 12:00 AS 18:15","jornadaLabel":"TER A SEX","jornada":[2,3,4,5]},{"id":11,"nome":"JULIA A.","funcao":"ASSISTENTE SOCIAL","local":"Filial 13 - RS","uf":"RS","horarioDesc":"SEG A SEX - 10HS AS 16:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":12,"nome":"SUSI M.","funcao":"GERENTE DE NUCLEO","local":"Filial 13 - RS","uf":"RS","horarioDesc":"SEG A SEX - 09HS AS 18HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":13,"nome":"ALEIDE L.","funcao":"AUXILIAR DE OFICINA","local":"Filial 12 - RN","uf":"RN","horarioDesc":"SEG A SEX - 11:15 AS 17:30","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":14,"nome":"ALEXSANDRA S.","funcao":"GERENTE DE NUCLEO","local":"Filial 12 - RN","uf":"RN","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":15,"nome":"ALINNE M.","funcao":"INSTRUTOR DE OFICINA","local":"Filial 12 - RN","uf":"RN","horarioDesc":"SEG A SEX - 13:30 AS 17:30","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":16,"nome":"DALIANA D.","funcao":"ASSISTENTE SOCIAL","local":"Filial 12 - RN","uf":"RN","horarioDesc":"SEG A SEX - 09HS AS 15:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":17,"nome":"LUCAS S.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 12 - RN","uf":"RN","horarioDesc":"SEG A SEX - 09HS AS 15:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":18,"nome":"CHRISTIANE C.","funcao":"ASSISTENTE SOCIAL","local":"Filial 11 - RJ","uf":"RJ","horarioDesc":"SEG A SEX - 10HS AS 16:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":19,"nome":"ITAMAR J.","funcao":"GERENTE DE NUCLEO","local":"Filial 11 - RJ","uf":"RJ","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":20,"nome":"RAFAEL S.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 11 - RJ","uf":"RJ","horarioDesc":"SEG QUA SEX - 08HS AS 17HS SAB 07HS AS 13:15","jornadaLabel":"SEG, QUA, SEX, SAB","jornada":[1,3,5,6]},{"id":21,"nome":"ANDREA M.","funcao":"GERENTE DE NUCLEO","local":"Filial 10 - PE","uf":"PE","horarioDesc":"SEG A SEX - 09HS AS 18HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":22,"nome":"DANIELA T.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 10 - PE","uf":"PE","horarioDesc":"SEG A SEX - 09HS AS 15:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":23,"nome":"VANESSA M.","funcao":"ASSISTENTE SOCIAL","local":"Filial 10 - PE","uf":"PE","horarioDesc":"SEG A SEX - 09HS AS 15:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":24,"nome":"MARIANA D.","funcao":"GERENTE DE NUCLEO","local":"Filial 09 - PR","uf":"PR","horarioDesc":"SEG A SEX - 09HS AS 18HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":25,"nome":"RAPHAELA F.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 09 - PR","uf":"PR","horarioDesc":"SEG A SEX - 09HS AS 15:30","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":26,"nome":"TATIELLE B.","funcao":"ASSISTENTE SOCIAL","local":"Filial 09 - PR","uf":"PR","horarioDesc":"SEG A SEX - 10HS AS 16:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":27,"nome":"ALESSANDRA S.","funcao":"ASSISTENTE SOCIAL","local":"Filial 08 - PA","uf":"PA","horarioDesc":"SEG A SEX - 09HS AS 15:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":28,"nome":"LEON L.","funcao":"TECNICO (A) MODALIDADE ESPORTIVA","local":"Filial 08 - PA","uf":"PA","horarioDesc":"SEG A SEX - 11HS AS 17:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":29,"nome":"FLORA O.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 07 - MG","uf":"MG","horarioDesc":"SEG QUA E SEX - 08HS AS 14:15 TER E QUI - 11HS AS 17:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":30,"nome":"KELY S.","funcao":"ASSISTENTE SOCIAL","local":"Filial 07 - MG","uf":"MG","horarioDesc":"SEG A SEX - 11HS AS 17:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":31,"nome":"SHIRLEY F.","funcao":"GERENTE DE NUCLEO","local":"Filial 07 - MG","uf":"MG","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":32,"nome":"ANA O.","funcao":"ASSISTENTE SOCIAL","local":"Filial 05 - ES","uf":"ES","horarioDesc":"SEG A SEX - 09HS AS 16HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":33,"nome":"ANDREA G.","funcao":"GERENTE DE NUCLEO","local":"Filial 06 - GO","uf":"GO","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":34,"nome":"JOAO J.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 06 - GO","uf":"GO","horarioDesc":"SEG A SEX - 10:30 AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":35,"nome":"LORRAINE M.","funcao":"GERENTE DE NUCLEO","local":"Filial 05 - ES","uf":"ES","horarioDesc":"SEG A SEX - 09HS AS 18HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":36,"nome":"VICTÓRIA D.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 05 - ES","uf":"ES","horarioDesc":"SEG A SEX - 10:30 AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":37,"nome":"YASMIN R.","funcao":"ASSISTENTE SOCIAL","local":"Filial 05 - ES","uf":"ES","horarioDesc":"SEG A SEX - 10:30 AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":38,"nome":"ANGELA S.","funcao":"GERENTE DE NUCLEO","local":"Filial 04 - DF","uf":"DF","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":39,"nome":"BARBARA B.","funcao":"ASSISTENTE SOCIAL","local":"Filial 04 - DF","uf":"DF","horarioDesc":"SEG E QUA - 08:00 AS 14:15 TER QUI SEX - 12:15 AS 18:30","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":40,"nome":"YGOR S.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 04 - DF","uf":"DF","horarioDesc":"SEG A SEX - 09HS AS 15:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":41,"nome":"CRISTIANA M.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 03 - CE","uf":"CE","horarioDesc":"SEG - 08HS AS 14:15 TER E QUI - 09HS AS 15:15 QUA - 08:30 AS 14:45 SEX - 09:30 AS 15:45","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":42,"nome":"DANIELE P.","funcao":"ASSISTENTE SOCIAL","local":"Filial 03 - CE","uf":"CE","horarioDesc":"SEG A SEX - 09HS AS 15:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":43,"nome":"EMANUELLA L.","funcao":"GERENTE DE NUCLEO","local":"Filial 03 - CE","uf":"CE","horarioDesc":"SEG A SEX - 09HS AS 18HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":44,"nome":"HUMBERTO F.","funcao":"TECNICO (A) DE ESPORTE E LAZER","local":"Filial 02 - BA","uf":"BA","horarioDesc":"SEG TER - 11:00 AS 17:15 QUA12:30 AS 18:45 QUI SEX 07:00 AS 13:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":45,"nome":"JOANICE O.","funcao":"ASSISTENTE SOCIAL","local":"Filial 02 - BA","uf":"BA","horarioDesc":"SEG A SEX - 11HS AS 17:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":46,"nome":"VANIA V.","funcao":"GERENTE DE NUCLEO","local":"Filial 02 - BA","uf":"BA","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":47,"nome":"BEATRIZ S.","funcao":"ESTAGIÁRIO FINANCEIRO","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 13H AS 18H","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5],"vaSomente":true},{"id":48,"nome":"BEATRIZ P.","funcao":"ASSISTENTE DE RH GENERALISTA","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 09HS AS 18HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":49,"nome":"CAMILA O.","funcao":"ASSISTENTE DE RELACIONAMENTO","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":50,"nome":"CHRISTIAN B.","funcao":"AUXILIAR ADMINISTRATIVO","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":51,"nome":"DANIELA F.","funcao":"SECRETARIA","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 08:30 AS 17:30","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":52,"nome":"DANIELA P.","funcao":"COORDENADOR DE CAPTACAO DE RECURSOS","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":53,"nome":"DANIELLE V.","funcao":"ASSISTENTE FINANCEIRO PLENO","local":"SEDE - GO","uf":"GO","horarioDesc":"SEG A SEX - 08:30 AS 17:30","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":54,"nome":"LAUANI S.","funcao":"ESTAGIÁRIO DE RH","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 13H AS 18H","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5],"vaSomente":true},{"id":55,"nome":"LORRAINY M.","funcao":"COORDENADOR DE RECURSOS HUMANOS","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 09HS AS 18HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":56,"nome":"MARIA S.","funcao":"COORDENADOR (A) PROJETOS SOCIAIS","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 09HS AS 18HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":57,"nome":"MATHEUS S.","funcao":"COORDENADOR(A) FINANCEIRO","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":58,"nome":"NATHALIA L.","funcao":"ASSISTENTE DE RELACIONAMENTO","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 08:30 AS 17:30","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":59,"nome":"SARAH F.","funcao":"ASSISTENTE FINANCEIRO PLENO","local":"SEDE - CE","uf":"CE","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":60,"nome":"SHEILA L.","funcao":"ASSISTENTE FINANCEIRO SENIOR","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 08HS AS 17HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":61,"nome":"VINICIUS S.","funcao":"COORDENADOR (A) DE ESPORTE E LAZER","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 09HS AS 18HS","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]},{"id":62,"nome":"WAGNER D.","funcao":"ASSISTENTE DE TI","local":"SEDE","uf":"SP","horarioDesc":"SEG A SEX - 09HS AS 15:15","jornadaLabel":"SEG A SEX","jornada":[1,2,3,4,5]}];
+
+const FERIADOS_SEED = [
+  {data:"2026-09-07", uf:"", nome:"Independência do Brasil"},
+  {data:"2026-10-12", uf:"", nome:"N. Sra. Aparecida"},
+  {data:"2026-11-02", uf:"", nome:"Finados"},
+  {data:"2026-11-15", uf:"", nome:"Proclamação da República"},
+  {data:"2026-11-20", uf:"", nome:"Consciência Negra (nacional)"},
+  {data:"2026-12-25", uf:"", nome:"Natal"},
+  {data:"2026-07-02", uf:"BA", nome:"Independência da Bahia"},
+  {data:"2026-07-08", uf:"SE", nome:"Emancipação de Sergipe"},
+  {data:"2026-07-09", uf:"SP", nome:"Revolução Constitucionalista"},
+  {data:"2026-09-20", uf:"RS", nome:"Revolução Farroupilha"},
+  {data:"2026-11-30", uf:"DF", nome:"Dia do Evangélico"},
+  {data:"2026-12-19", uf:"PR", nome:"Emancipação do Paraná"}
+];
+
+// NR -> UF (selecionar o NR define a UF e o VA automaticamente)
+const NR_UF = {
+  "Filial 02 - BA":"BA","Filial 03 - CE":"CE","Filial 04 - DF":"DF","Filial 05 - ES":"ES",
+  "Filial 06 - GO":"GO","Filial 07 - MG":"MG","Filial 08 - PA":"PA","Filial 09 - PR":"PR",
+  "Filial 10 - PE":"PE","Filial 11 - RJ":"RJ","Filial 12 - RN":"RN","Filial 13 - RS":"RS",
+  "Filial 14 - SC":"SC","Filial 16 - SE":"SE",
+  "SEDE":"SP",        // Matriz — São Paulo
+  "SEDE - CE":"CE",   // Sede Ceará — segue calendário CE
+  "SEDE - GO":"GO",   // Sede Goiás — segue calendário GO
+  "SP":"SP","A DEFINIR":""
+};
+// Rótulo amigável exibido nos dropdowns de NR
+const NR_LABEL = {
+  "SEDE":"SEDE — Matriz (SP)",
+  "SEDE - CE":"SEDE — CE (Ceará)",
+  "SEDE - GO":"SEDE — GO (Goiás)",
+  "SP":"SP (São Paulo)"
+};
+
+const MESES = [{idx:6,nome:"Julho"},{idx:7,nome:"Agosto"},{idx:8,nome:"Setembro"},{idx:9,nome:"Outubro"},{idx:10,nome:"Novembro"},{idx:11,nome:"Dezembro"}];
+const MES_ABR = {6:"Jul",7:"Ago",8:"Set",9:"Out",10:"Nov",11:"Dez"};
+const ANO = 2026;
+const DIAS_LBL = ["DOM","SEG","TER","QUA","QUI","SEX","SÁB"];
+
+const SEED_VERSION = "v20260622-62";
+let state = carregar();
+function carregar(){
+  try{
+    const s=localStorage.getItem("valRefAlim2026");
+    if(s){
+      const o=JSON.parse(s);
+      // Se a versão do seed mudou (base foi atualizada), descarta o cache e usa a nova base
+      if(o.colab&&o.feriados&&o.seedVersion===SEED_VERSION) return o;
+    }
+  }catch(e){}
+  return { colab: JSON.parse(JSON.stringify(COLAB_SEED)), feriados: JSON.parse(JSON.stringify(FERIADOS_SEED)), rate:46, vaSP:240, ajustes:{}, seedVersion:SEED_VERSION };
+}
+function salvar(){ try{ state.seedVersion=SEED_VERSION; localStorage.setItem("valRefAlim2026", JSON.stringify(state)); }catch(e){ /* file:// ou modo privado: ignora e segue funcionando */ } }
+
+function fmtBRL(v){ return "R$ " + (v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtData(d){ const[a,m,dd]=d.split("-"); return `${dd}/${m}/${a}`; }
+function feriadosDoMes(mesIdx,uf){ return state.feriados.filter(f=>{const dt=new Date(f.data+"T12:00:00"); return dt.getMonth()===mesIdx&&(f.uf===""||f.uf===uf);}); }
+function diasJornadaMes(jornada,mesIdx){ let n=0; const dim=new Date(ANO,mesIdx+1,0).getDate(); for(let d=1;d<=dim;d++){if(jornada.includes(new Date(ANO,mesIdx,d).getDay()))n++;} return n; }
+function feriadosImpacto(jornada,mesIdx,uf){ return feriadosDoMes(mesIdx,uf).filter(f=>jornada.includes(new Date(f.data+"T12:00:00").getDay())); }
+function ajusteDe(id,mesIdx){ return Number(state.ajustes?.[`${id}_${mesIdx}`]||0); }
+function isSP(c){ return (c.uf||"").toUpperCase()==="SP"; }
+
+function calc(c,mesIdx){
+  // vaSomente: estagiários/bolsistas sem VR diário, só VA fixo mensal
+  if(c.vaSomente){
+    const va=isSP(c)?Number(state.vaSP||0):0;
+    return {base:0,feriados:[],nFer:0,ajuste:0,dias:0,vr:0,va,total:va,vaSomente:true};
+  }
+  const base=diasJornadaMes(c.jornada,mesIdx);
+  const fer=feriadosImpacto(c.jornada,mesIdx,c.uf);
+  const aj=ajusteDe(c.id,mesIdx);
+  let dias=base-fer.length-aj; if(dias<0)dias=0;
+  const vr=dias*Number(state.rate||0);
+  const va=(isSP(c)&&dias>0)?Number(state.vaSP||0):0;
+  return {base,feriados:fer,nFer:fer.length,ajuste:aj,dias,vr,va,total:vr+va,vaSomente:false};
+}
+
+function colabFiltrados(){
+  const nr=document.getElementById("fNR").value, jor=document.getElementById("fJor").value, nome=document.getElementById("fNome").value.trim().toUpperCase();
+  return state.colab.filter(c=>(!nr||c.local===nr)&&(!jor||c.jornadaLabel===jor)&&(!nome||c.nome.toUpperCase().includes(nome)));
+}
+function mesAtual(){ return Number(document.getElementById("mesSel").value); }
+
+function render(){
+  state.rate=Number(document.getElementById("rate").value||0);
+  state.vaSP=Number(document.getElementById("vaSP").value||0);
+  salvar();
+  renderTotal(); renderMes(); renderNR(); renderBase(); renderFer();
+}
+
+// ---- PEDIDO TOTAL (previsibilidade Jul-Dez) ----
+function renderTotal(){
+  const cs=colabFiltrados();
+  const nDef=state.colab.filter(c=>!c.uf||c.local==="A DEFINIR").length;
+  document.getElementById("avisoDef").innerHTML = nDef>0 ?
+    `<div class="aviso">⚠️ <span><b>${nDef} colaborador(es)</b> ainda sem NR definido ("A DEFINIR"). Enquanto o NR não for escolhido, o VA de SP não é aplicado a eles. Defina o NR na coluna abaixo ou na aba Base.</span><button class="btn laranja" onclick="document.getElementById('fNR').value='A DEFINIR';render();">Ver pendentes</button></div>` : "";
+
+  let html=`<thead><tr><th>#</th><th>Colaborador</th><th>NR / Local</th><th class="center">UF</th><th>Jornada</th>`;
+  MESES.forEach(m=>html+=`<th class="num mes">${MES_ABR[m.idx]} VR</th>`);
+  html+=`<th class="num">VR período</th><th class="num">VA período</th><th class="num">TOTAL</th><th></th></tr></thead><tbody>`;
+  const totMesVR=MESES.map(()=>0); let totVR=0,totVA=0,totGeral=0;
+  cs.forEach(c=>{
+    let cVR=0,cVA=0;
+    let cells="";
+    MESES.forEach((m,i)=>{const r=calc(c,m.idx); cells+=`<td class="num">${fmtBRL(r.vr)}</td>`; cVR+=r.vr; cVA+=r.va; totMesVR[i]+=r.vr;});
+    totVR+=cVR; totVA+=cVA; totGeral+=cVR+cVA;
+    const ufpill = isSP(c)?`<span class="pill sp">SP</span>`:(c.uf?`<span class="pill uf">${c.uf}</span>`:`<span class="pill def">?</span>`);
+    html+=`<tr><td>${c.id}</td><td><b>${c.nome}</b><div class="small">${c.funcao||""}</div></td>
+      <td>${nrSelect(c)}</td><td class="center">${ufpill}</td>
+      <td><span class="pill">${c.jornadaLabel}</span></td>${cells}
+      <td class="num">${fmtBRL(cVR)}</td><td class="num va-tag">${cVA?fmtBRL(cVA):"—"}</td>
+      <td class="num"><b>${fmtBRL(cVR+cVA)}</b></td>
+      <td class="row-actions"><button data-delc="${c.id}" title="Remover">🗑</button></td></tr>`;
+  });
+  html+=`<tr class="tot-row"><td colspan="5">TOTAL (${cs.length} colaboradores)</td>`;
+  totMesVR.forEach(v=>html+=`<td class="num">${fmtBRL(v)}</td>`);
+  html+=`<td class="num">${fmtBRL(totVR)}</td><td class="num">${fmtBRL(totVA)}</td><td class="num">${fmtBRL(totGeral)}</td><td></td></tr></tbody>`;
+  document.getElementById("tblTotal").innerHTML=html;
+
+  document.getElementById("tColab").textContent=cs.length;
+  document.getElementById("tNR").textContent=new Set(state.colab.map(c=>c.local)).size;
+  document.getElementById("tVA").textContent=fmtBRL(totVA);
+  document.getElementById("tVR").textContent=fmtBRL(totVR);
+  document.getElementById("tGeral").textContent=fmtBRL(totGeral);
+  document.getElementById("legTotal").innerHTML=`<b>VR (Vale Refeição):</b> ${fmtBRL(state.rate)}/dia útil trabalhado, para todos. &nbsp;|&nbsp; <b>VA (Vale Alimentação):</b> ${fmtBRL(state.vaSP)}/mês fixo, <b>somente colaboradores de SP</b>. &nbsp;|&nbsp; Feriados reduzem o VR apenas quando caem em dia da jornada do colaborador.`;
+  bindTotal();
+}
+function nrLabel(nr){ return NR_LABEL[nr]||nr; }
+function nrSelect(c){
+  const opts=Object.keys(NR_UF).map(nr=>`<option value="${nr}" ${nr===c.local?"selected":""}>${nrLabel(nr)}</option>`).join("");
+  return `<select class="cellsel ${c.local==='A DEFINIR'?'def':''}" data-nrc="${c.id}">${opts}</select>`;
+}
+function bindTotal(){
+  document.querySelectorAll("select[data-nrc]").forEach(s=>s.addEventListener("change",e=>{
+    const c=state.colab.find(x=>x.id==e.target.dataset.nrc); c.local=e.target.value; c.uf=NR_UF[e.target.value]||""; atualizarFiltros(); render();
+  }));
+  document.querySelectorAll("button[data-delc]").forEach(b=>b.addEventListener("click",()=>{
+    if(confirm("Remover este colaborador?")){ state.colab=state.colab.filter(x=>x.id!=b.dataset.delc); atualizarFiltros(); render(); }
+  }));
+}
+
+// ---- PEDIDO DO MES ----
+function renderMes(){
+  const mi=mesAtual(), nm=MESES.find(m=>m.idx===mi).nome, cs=colabFiltrados();
+  let html=`<thead><tr><th>#</th><th>Colaborador</th><th>NR / Local</th><th class="center">UF</th><th>Jornada</th><th class="num">Dias jorn.</th><th class="num">Feriado</th><th class="num">Ajuste</th><th class="num">Dias VR</th><th class="num">VR</th><th class="num">VA (SP)</th><th class="num">Total</th></tr></thead><tbody>`;
+  let sVR=0,sVA=0;
+  cs.forEach(c=>{const r=calc(c,mi); sVR+=r.vr; sVA+=r.va;
+    const fTxt=r.feriados.map(f=>fmtData(f.data).slice(0,5)).join(", ");
+    const ufPill=isSP(c)?'<span class="pill sp">SP</span>':(c.uf?`<span class="pill uf">${c.uf}</span>`:'<span class="pill def">?</span>');
+    const jorPill=c.vaSomente
+      ?'<span class="pill va-only">VA somente</span>'
+      :`<span class="pill">${c.jornadaLabel}</span>`;
+    const ajInput=c.vaSomente?'—':`<input class="cell" type="number" min="0" value="${r.ajuste}" data-aj="${c.id}_${mi}">`;
+    html+=`<tr><td>${c.id}</td><td>${c.nome}</td><td>${c.local}</td><td class="center">${ufPill}</td>
+      <td>${jorPill}</td>
+      <td class="num">${r.vaSomente?'—':r.base}</td>
+      <td class="num">${r.vaSomente?'—':(r.nFer?`-${r.nFer}`:"0")}</td>
+      <td class="num">${ajInput}</td>
+      <td class="num"><b>${r.vaSomente?'—':r.dias}</b></td>
+      <td class="num">${r.vr?fmtBRL(r.vr):'—'}</td>
+      <td class="num va-tag">${r.va?fmtBRL(r.va):"—"}</td>
+      <td class="num"><b>${fmtBRL(r.total)}</b></td></tr>`;
+  });
+  html+=`<tr class="tot-row"><td colspan="9">TOTAL — ${nm}/2026 (${cs.length})</td><td class="num">${fmtBRL(sVR)}</td><td class="num">${fmtBRL(sVA)}</td><td class="num">${fmtBRL(sVR+sVA)}</td></tr></tbody>`;
+  document.getElementById("tblMes").innerHTML=html;
+  document.getElementById("mMes").textContent=nm;
+  document.getElementById("mColab").textContent=cs.length;
+  document.getElementById("mVR").textContent=fmtBRL(sVR);
+  document.getElementById("mVA").textContent=fmtBRL(sVA);
+  document.getElementById("mTot").textContent=fmtBRL(sVR+sVA);
+  document.querySelectorAll("input[data-aj]").forEach(inp=>inp.addEventListener("change",e=>{ if(!state.ajustes)state.ajustes={}; state.ajustes[e.target.dataset.aj]=Number(e.target.value||0); render(); }));
+}
+
+// ---- RESUMO POR NR ----
+function renderNR(){
+  const mi=mesAtual(), nm=MESES.find(m=>m.idx===mi).nome, cs=colabFiltrados();
+  let html=`<thead><tr><th>NR / Local</th><th class="center">UF</th><th class="num">Colab.</th><th>Feriados no mês</th><th class="num">VR</th><th class="num">VA (SP)</th><th class="num">Total</th></tr></thead><tbody>`;
+  const locais=[...new Set(cs.map(c=>c.local))].sort();
+  let tVR=0,tVA=0,tC=0;
+  locais.forEach(loc=>{const grp=cs.filter(c=>c.local===loc); const uf=grp[0].uf;
+    let vr=0,va=0; grp.forEach(c=>{const r=calc(c,mi); vr+=r.vr; va+=r.va;});
+    const fer=feriadosDoMes(mi,uf).map(f=>`${fmtData(f.data).slice(0,5)} ${f.nome}`).join("; ")||"—";
+    tVR+=vr; tVA+=va; tC+=grp.length;
+    html+=`<tr><td><b>${loc}</b></td><td class="center">${uf?(uf==='SP'?'<span class="pill sp">SP</span>':`<span class="pill uf">${uf}</span>`):'<span class="pill def">?</span>'}</td><td class="num">${grp.length}</td><td class="small">${fer}</td><td class="num">${fmtBRL(vr)}</td><td class="num va-tag">${va?fmtBRL(va):"—"}</td><td class="num"><b>${fmtBRL(vr+va)}</b></td></tr>`;
+  });
+  html+=`<tr class="tot-row"><td>TOTAL</td><td></td><td class="num">${tC}</td><td></td><td class="num">${fmtBRL(tVR)}</td><td class="num">${fmtBRL(tVA)}</td><td class="num">${fmtBRL(tVR+tVA)}</td></tr></tbody>`;
+  document.getElementById("tblNR").innerHTML=html;
+  document.getElementById("nrMes").textContent=nm;
+  document.getElementById("nrTot").textContent=fmtBRL(tVR+tVA);
+}
+
+// ---- BASE ----
+function renderBase(){
+  let html=`<thead><tr><th>#</th><th>Colaborador</th><th>Função</th><th>NR / Local</th><th class="center">UF</th><th>Jornada (clique nos dias)</th><th class="center">ⓘ</th><th></th></tr></thead><tbody>`;
+  state.colab.forEach((c,idx)=>{
+    let grid=`<div class="dias-grid">`;
+    for(let d=0;d<7;d++){const on=c.jornada.includes(d); const wk=(d===0||d===6)?"wknd":""; grid+=`<div class="dia-chk ${wk} ${on?'on':''}" data-day="${idx}_${d}">${DIAS_LBL[d]}</div>`;}
+    grid+=`</div>`;
+    const opts=Object.keys(NR_UF).map(nr=>`<option value="${nr}" ${nr===c.local?"selected":""}>${nrLabel(nr)}</option>`).join("");
+    html+=`<tr><td>${c.id}</td>
+      <td><input class="celltxt" value="${(c.nome||'').replace(/"/g,'&quot;')}" data-f="nome" data-i="${idx}"></td>
+      <td><input class="celltxt" value="${(c.funcao||'').replace(/"/g,'&quot;')}" data-f="funcao" data-i="${idx}"></td>
+      <td><select class="cellsel ${c.local==='A DEFINIR'?'def':''}" data-nr="${idx}">${opts}</select></td>
+      <td class="center">${c.uf?(c.uf==='SP'?'<span class="pill sp">SP</span>':`<span class="pill uf">${c.uf}</span>`):'<span class="pill def">?</span>'}</td>
+      <td>${grid}</td>
+      <td class="center" title="${(c.horarioDesc||'').replace(/"/g,'&quot;')}" style="cursor:help">ⓘ</td>
+      <td class="row-actions"><button data-del="${idx}">🗑</button></td></tr>`;
+  });
+  html+=`</tbody>`;
+  document.getElementById("tblBase").innerHTML=html;
+  document.querySelectorAll(".dia-chk").forEach(el=>el.addEventListener("click",()=>{
+    const[i,d]=el.dataset.day.split("_").map(Number); const j=state.colab[i].jornada; const p=j.indexOf(d);
+    if(p>=0)j.splice(p,1); else{j.push(d);j.sort((a,b)=>a-b);}
+    state.colab[i].jornadaLabel=jornadaLabel(j); atualizarFiltros(); render();
+  }));
+  document.querySelectorAll("input[data-f]").forEach(inp=>inp.addEventListener("change",e=>{const i=+e.target.dataset.i; state.colab[i][e.target.dataset.f]=e.target.value; render();}));
+  document.querySelectorAll("select[data-nr]").forEach(s=>s.addEventListener("change",e=>{const i=+e.target.dataset.nr; state.colab[i].local=e.target.value; state.colab[i].uf=NR_UF[e.target.value]||""; atualizarFiltros(); render();}));
+  document.querySelectorAll("button[data-del]").forEach(b=>b.addEventListener("click",()=>{if(confirm("Remover este colaborador?")){state.colab.splice(+b.dataset.del,1); atualizarFiltros(); render();}}));
+}
+function jornadaLabel(j){ if(!j.length)return"—"; const cont=j.every((v,i)=>i===0||v===j[i-1]+1); if(cont&&j.length>2)return`${DIAS_LBL[j[0]]} A ${DIAS_LBL[j[j.length-1]]}`; return j.map(d=>DIAS_LBL[d]).join(", "); }
+
+// ---- FERIADOS ----
+function renderFer(){
+  const sorted=[...state.feriados].sort((a,b)=>a.data<b.data?-1:1);
+  let html=`<thead><tr><th>Data</th><th>Dia da semana</th><th>UF (vazio = Nacional)</th><th>Descrição</th><th></th></tr></thead><tbody>`;
+  sorted.forEach(f=>{const ri=state.feriados.indexOf(f); const wd=DIAS_LBL[new Date(f.data+"T12:00:00").getDay()];
+    html+=`<tr><td><input class="celltxt" style="width:140px" value="${f.data}" data-ff="data" data-i="${ri}"></td>
+      <td class="${wd==='SÁB'||wd==='DOM'?'small':''}">${wd}</td>
+      <td><input class="cell" style="width:64px;text-align:center" value="${f.uf}" data-ff="uf" data-i="${ri}"></td>
+      <td><input class="celltxt" value="${(f.nome||'').replace(/"/g,'&quot;')}" data-ff="nome" data-i="${ri}"></td>
+      <td class="row-actions"><button data-delf="${ri}">🗑</button></td></tr>`;
+  });
+  html+=`</tbody>`;
+  document.getElementById("tblFer").innerHTML=html;
+  document.querySelectorAll("input[data-ff]").forEach(inp=>inp.addEventListener("change",e=>{const i=+e.target.dataset.i,f=e.target.dataset.ff; state.feriados[i][f]=f==="uf"?e.target.value.trim().toUpperCase():e.target.value.trim(); render();}));
+  document.querySelectorAll("button[data-delf]").forEach(b=>b.addEventListener("click",()=>{state.feriados.splice(+b.dataset.delf,1); render();}));
+}
+
+// ---- FILTROS ----
+function atualizarFiltros(){
+  const nrSel=document.getElementById("fNR"),jorSel=document.getElementById("fJor");
+  const nrV=nrSel.value,jorV=jorSel.value;
+  const locais=[...new Set(state.colab.map(c=>c.local))].sort();
+  const jors=[...new Set(state.colab.map(c=>c.jornadaLabel))].sort();
+  nrSel.innerHTML=`<option value="">Todos os NRs</option>`+locais.map(l=>`<option value="${l}">${nrLabel(l)}</option>`).join("");
+  jorSel.innerHTML=`<option value="">Todas</option>`+jors.map(j=>`<option value="${j}">${j}</option>`).join("");
+  nrSel.value=nrV; jorSel.value=jorV;
+}
+
+// ---- EXPORT (Excel via HTML .xls) ----
+function tabela(titulo,headers,rows){
+  let h=`<table border="1"><tr><th colspan="${headers.length}" style="background:#0B4DA2;color:#fff;font-size:16px">${titulo}</th></tr><tr>`;
+  headers.forEach(x=>h+=`<th style="background:#073876;color:#fff">${x}</th>`); h+=`</tr>`;
+  rows.forEach(r=>{h+=`<tr>`; r.forEach(c=>h+=`<td>${c}</td>`); h+=`</tr>`;}); h+=`</table><br>`; return h;
+}
+function baixar(conteudo,nome,tipo){const blob=new Blob(["﻿"+conteudo],{type:tipo}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=nome; document.body.appendChild(a); a.click(); a.remove();}
+function exportarMes(mi){
+  const nm=MESES.find(m=>m.idx===mi).nome, cs=colabFiltrados();
+  const rows=cs.map(c=>{const r=calc(c,mi); return [c.id,c.nome,c.funcao,c.local,c.uf,c.jornadaLabel,r.base,r.nFer,r.ajuste,r.dias,fmtBRL(r.vr),r.va?fmtBRL(r.va):"-",fmtBRL(r.total)];});
+  const sVR=cs.reduce((s,c)=>s+calc(c,mi).vr,0), sVA=cs.reduce((s,c)=>s+calc(c,mi).va,0);
+  rows.push(["","","","","","","","","","TOTAL",fmtBRL(sVR),fmtBRL(sVA),fmtBRL(sVR+sVA)]);
+  const head=["#","Colaborador","Função","NR/Local","UF","Jornada","Dias jornada","Feriado","Ajuste","Dias VR","VR","VA (SP)","Total"];
+  baixar(`<html><head><meta charset="UTF-8"></head><body>`+tabela(`Pedido Recarga — ${nm}/2026 — VR ${fmtBRL(state.rate)}/dia · VA SP ${fmtBRL(state.vaSP)}/mês`,head,rows)+`</body></html>`,`Pedido Recarga - ${nm} 2026.xls`,"application/vnd.ms-excel");
+}
+function exportarTudo(){
+  let body=`<html><head><meta charset="UTF-8"></head><body>`;
+  const head=["Colaborador","NR/Local","UF",...MESES.map(m=>MES_ABR[m.idx]+" VR"),"VR período","VA período","TOTAL"];
+  const rows=state.colab.map(c=>{let vr=0,va=0; const cells=MESES.map(m=>{const r=calc(c,m.idx); vr+=r.vr; va+=r.va; return fmtBRL(r.vr);}); return [c.nome,c.local,c.uf,...cells,fmtBRL(vr),fmtBRL(va),fmtBRL(vr+va)];});
+  const tmVR=MESES.map(m=>state.colab.reduce((s,c)=>s+calc(c,m.idx).vr,0));
+  const TVR=tmVR.reduce((a,b)=>a+b,0), TVA=state.colab.reduce((s,c)=>s+MESES.reduce((ss,m)=>ss+calc(c,m.idx).va,0),0);
+  rows.push(["TOTAL","","",...tmVR.map(fmtBRL),fmtBRL(TVR),fmtBRL(TVA),fmtBRL(TVR+TVA)]);
+  body+=tabela("PREVISÃO TOTAL — Jul a Dez 2026",head,rows);
+  MESES.forEach(m=>{
+    const rs=state.colab.map(c=>{const r=calc(c,m.idx); return [c.nome,c.local,c.uf,c.jornadaLabel,r.dias,fmtBRL(r.vr),r.va?fmtBRL(r.va):"-",fmtBRL(r.total)];});
+    const sVR=state.colab.reduce((s,c)=>s+calc(c,m.idx).vr,0), sVA=state.colab.reduce((s,c)=>s+calc(c,m.idx).va,0);
+    rs.push(["","","","","TOTAL",fmtBRL(sVR),fmtBRL(sVA),fmtBRL(sVR+sVA)]);
+    body+=tabela(`${m.nome}/2026`,["Colaborador","NR/Local","UF","Jornada","Dias VR","VR","VA (SP)","Total"],rs);
+  });
+  body+=`</body></html>`;
+  baixar(body,`Previsao Recarga - Jul-Dez 2026.xls`,"application/vnd.ms-excel");
+}
+
+// ---- EVENTOS ----
+document.getElementById("mesSel").innerHTML=MESES.map(m=>`<option value="${m.idx}">${m.nome}/2026</option>`).join("");
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active")); t.classList.add("active"); document.getElementById("panel-"+t.dataset.p).classList.add("active");}));
+["rate","vaSP","mesSel","fNR","fJor","fNome"].forEach(id=>document.getElementById(id).addEventListener("input",render));
+document.getElementById("btnSalvarMes").addEventListener("click",()=>exportarMes(mesAtual()));
+document.getElementById("btnBackup").addEventListener("click",()=>baixar(JSON.stringify(state,null,2),`backup-val-refeicao-alimentacao-${ANO}.json`,"application/json"));
+document.getElementById("btnRestaurar").addEventListener("click",()=>document.getElementById("fileInput").click());
+document.getElementById("fileInput").addEventListener("change",e=>{const f=e.target.files[0]; if(!f)return; const rd=new FileReader(); rd.onload=ev=>{try{const o=JSON.parse(ev.target.result); if(o.colab&&o.feriados){state=o; salvar(); document.getElementById("rate").value=state.rate||46; document.getElementById("vaSP").value=state.vaSP||240; atualizarFiltros(); render(); alert("Backup restaurado!");}else alert("Arquivo inválido.");}catch(err){alert("Erro ao ler arquivo.");}}; rd.readAsText(f);});
+function novoColab(){const id=Math.max(0,...state.colab.map(c=>c.id))+1; state.colab.push({id,nome:"NOVO COLABORADOR",funcao:"",local:"A DEFINIR",uf:"",admissao:"",horarioDesc:"",jornadaLabel:"SEG A SEX",jornada:[1,2,3,4,5]}); atualizarFiltros(); render();}
+document.getElementById("btnAddTotal").addEventListener("click",novoColab);
+document.getElementById("btnAddBase").addEventListener("click",novoColab);
+document.getElementById("btnAddFer").addEventListener("click",()=>{state.feriados.push({data:`${ANO}-07-01`,uf:"",nome:"Novo feriado"}); render();});
+
+document.getElementById("rate").value=state.rate||46;
+document.getElementById("vaSP").value=state.vaSP||240;
+atualizarFiltros(); render();
+</script>
+</body>
+</html>
