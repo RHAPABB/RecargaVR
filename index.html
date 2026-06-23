@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle de Recarga - Val Refeição &amp; Alimentação</title>
+<title>Vale Refeição &amp; Alimentação — APABB</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap');
   :root{
@@ -78,6 +78,7 @@
   .legend b{color:var(--texto);}
   .va-tag{color:#b8860b;font-weight:800;}
   .pill.va-only{background:#fff6dc;color:#b8860b;border:1px solid #f0c050;}
+  input.cpf-miss{border-color:var(--laranja)!important;background:var(--laranja-cl)!important;}
   @media print{.toolbar .btn,.tabs,.row-actions,.aviso button{display:none!important;} .panel{display:block!important;} header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
 </style>
 </head>
@@ -85,7 +86,7 @@
 <header>
   <div class="logo">🍽️</div>
   <div>
-    <h1>Controle de Recarga — Val Refeição &amp; Alimentação</h1>
+    <h1>Vale Refeição &amp; Alimentação</h1>
     <div class="sub">Previsibilidade de pedidos · Julho a Dezembro de 2026 · APABB — Recursos Humanos / DP</div>
   </div>
 </header>
@@ -96,7 +97,7 @@
     <input type="number" id="rate" value="46" step="0.01" min="0">
   </div>
   <div class="fld">
-    <label>VA — Alimentação (R$/mês · só SP)</label>
+    <label>VA — Alimentação (R$/mês)</label>
     <input type="number" id="vaSP" value="240" step="0.01" min="0">
   </div>
   <div class="fld">
@@ -117,6 +118,7 @@
   </div>
   <div class="spacer"></div>
   <div class="fld"><label>&nbsp;</label><button class="btn verde" id="btnSalvarMes">💾 Exportar mês selecionado</button></div>
+  <div class="fld"><label>&nbsp;</label><button class="btn amarelo" id="btnFlash">⚡ Exportar planilha Flash</button></div>
   <div class="fld"><label>&nbsp;</label><button class="btn cinza" id="btnBackup">⬇ Backup</button></div>
   <div class="fld"><label>&nbsp;</label><button class="btn cinza" id="btnRestaurar">⬆ Restaurar</button><input type="file" id="fileInput" accept=".json" style="display:none"></div>
 </div>
@@ -150,7 +152,7 @@
 
   <!-- PEDIDO DO MES -->
   <section class="panel active" id="panel-mes">
-    <div class="hint">Pedido do mês selecionado para enviar ao Financeiro. <b>VR (Refeição)</b> = dias da jornada no mês − feriados que caem na jornada. <b>VA (Alimentação) = R$ fixo somente para SP — SEDE (Matriz), SP e SEDE não têm VA para CE ou GO.</b> Use <b>Ajuste</b> para descontar férias, admissão parcial ou afastamento. <b>SEDE-CE e SEDE-GO seguem o calendário de feriados do Ceará e Goiás</b>, respectivamente.</div>
+    <div class="hint">Pedido do mês selecionado para enviar ao Financeiro. <b>VR (Refeição)</b> = dias da jornada no mês − feriados que caem na jornada. <b>VA (Alimentação) = R$ fixo para SP (SEDE Matriz e SP) + casos especiais: Sarah Sales (SEDE-CE) e Danielle Antunes (SEDE-GO).</b> Use <b>Ajuste</b> para descontar férias, admissão parcial ou afastamento. <b>SEDE-CE e SEDE-GO seguem o calendário de feriados do Ceará e Goiás</b>, respectivamente.</div>
     <div class="cards">
       <div class="card"><div class="lbl">Mês</div><div class="val" id="mMes" style="font-size:19px">—</div></div>
       <div class="card azul"><div class="lbl">Colaboradores</div><div class="val" id="mColab">—</div></div>
@@ -173,7 +175,8 @@
 
   <!-- BASE -->
   <section class="panel" id="panel-base">
-    <div class="hint">Base editável. Selecione o <b>NR</b> (define a UF e o VA automaticamente) e clique nos dias para ajustar a <b>jornada</b>. Tudo recalcula na hora e fica salvo no navegador. Passe o mouse na ⓘ para ver o horário original.</div>
+    <div class="hint">Base editável. Selecione o <b>NR</b> (define a UF e o VA automaticamente) e clique nos dias para ajustar a <b>jornada</b>. Preencha o <b>CPF</b> (necessário para o export Flash). Passe o mouse na ⓘ para ver o horário original.</div>
+    <div id="avisoBaseCpf"></div>
     <div style="margin-bottom:12px"><button class="btn verde" id="btnAddBase">➕ Adicionar colaborador</button></div>
     <div class="tablewrap"><table id="tblBase"></table></div>
   </section>
@@ -233,7 +236,7 @@ const MES_ABR = {6:"Jul",7:"Ago",8:"Set",9:"Out",10:"Nov",11:"Dez"};
 const ANO = 2026;
 const DIAS_LBL = ["DOM","SEG","TER","QUA","QUI","SEX","SÁB"];
 
-const SEED_VERSION = "v20260622-62";
+const SEED_VERSION = "v20260623-61";
 let state = carregar();
 function carregar(){
   try{
@@ -256,10 +259,10 @@ function feriadosImpacto(jornada,mesIdx,uf){ return feriadosDoMes(mesIdx,uf).fil
 function ajusteDe(id,mesIdx){ return Number(state.ajustes?.[`${id}_${mesIdx}`]||0); }
 function isSP(c){ return (c.uf||"").toUpperCase()==="SP"; }
 
+function vaEligivel(c){ return isSP(c)||c.vaExtra; }
 function calc(c,mesIdx){
-  // vaSomente: estagiários/bolsistas sem VR diário, só VA fixo mensal
   if(c.vaSomente){
-    const va=isSP(c)?Number(state.vaSP||0):0;
+    const va=vaEligivel(c)?Number(state.vaSP||0):0;
     return {base:0,feriados:[],nFer:0,ajuste:0,dias:0,vr:0,va,total:va,vaSomente:true};
   }
   const base=diasJornadaMes(c.jornada,mesIdx);
@@ -267,7 +270,7 @@ function calc(c,mesIdx){
   const aj=ajusteDe(c.id,mesIdx);
   let dias=base-fer.length-aj; if(dias<0)dias=0;
   const vr=dias*Number(state.rate||0);
-  const va=(isSP(c)&&dias>0)?Number(state.vaSP||0):0;
+  const va=(vaEligivel(c)&&dias>0)?Number(state.vaSP||0):0;
   return {base,feriados:fer,nFer:fer.length,ajuste:aj,dias,vr,va,total:vr+va,vaSomente:false};
 }
 
@@ -318,7 +321,7 @@ function renderTotal(){
   document.getElementById("tVA").textContent=fmtBRL(totVA);
   document.getElementById("tVR").textContent=fmtBRL(totVR);
   document.getElementById("tGeral").textContent=fmtBRL(totGeral);
-  document.getElementById("legTotal").innerHTML=`<b>VR (Vale Refeição):</b> ${fmtBRL(state.rate)}/dia útil trabalhado, para todos. &nbsp;|&nbsp; <b>VA (Vale Alimentação):</b> ${fmtBRL(state.vaSP)}/mês fixo, <b>somente colaboradores de SP</b>. &nbsp;|&nbsp; Feriados reduzem o VR apenas quando caem em dia da jornada do colaborador.`;
+  document.getElementById("legTotal").innerHTML=`<b>VR (Vale Refeição):</b> ${fmtBRL(state.rate)}/dia útil trabalhado, para todos. &nbsp;|&nbsp; <b>VA (Vale Alimentação):</b> ${fmtBRL(state.vaSP)}/mês fixo, colaboradores de <b>SP</b> + casos especiais CE/GO (Sarah e Danielle). &nbsp;|&nbsp; Feriados reduzem o VR apenas quando caem em dia da jornada do colaborador.`;
   bindTotal();
 }
 function nrLabel(nr){ return NR_LABEL[nr]||nr; }
@@ -338,7 +341,7 @@ function bindTotal(){
 // ---- PEDIDO DO MES ----
 function renderMes(){
   const mi=mesAtual(), nm=MESES.find(m=>m.idx===mi).nome, cs=colabFiltrados();
-  let html=`<thead><tr><th>#</th><th>Colaborador</th><th>NR / Local</th><th class="center">UF</th><th>Jornada</th><th class="num">Dias jorn.</th><th class="num">Feriado</th><th class="num">Ajuste</th><th class="num">Dias VR</th><th class="num">VR</th><th class="num">VA (SP)</th><th class="num">Total</th></tr></thead><tbody>`;
+  let html=`<thead><tr><th>#</th><th>Colaborador</th><th>NR / Local</th><th class="center">UF</th><th>Jornada</th><th class="num">Dias jorn.</th><th class="num">Feriado</th><th class="num">Ajuste</th><th class="num">Dias VR</th><th class="num">VR</th><th class="num">VA</th><th class="num">Total</th></tr></thead><tbody>`;
   let sVR=0,sVA=0;
   cs.forEach(c=>{const r=calc(c,mi); sVR+=r.vr; sVA+=r.va;
     const fTxt=r.feriados.map(f=>fmtData(f.data).slice(0,5)).join(", ");
@@ -370,7 +373,7 @@ function renderMes(){
 // ---- RESUMO POR NR ----
 function renderNR(){
   const mi=mesAtual(), nm=MESES.find(m=>m.idx===mi).nome, cs=colabFiltrados();
-  let html=`<thead><tr><th>NR / Local</th><th class="center">UF</th><th class="num">Colab.</th><th>Feriados no mês</th><th class="num">VR</th><th class="num">VA (SP)</th><th class="num">Total</th></tr></thead><tbody>`;
+  let html=`<thead><tr><th>NR / Local</th><th class="center">UF</th><th class="num">Colab.</th><th>Feriados no mês</th><th class="num">VR</th><th class="num">VA</th><th class="num">Total</th></tr></thead><tbody>`;
   const locais=[...new Set(cs.map(c=>c.local))].sort();
   let tVR=0,tVA=0,tC=0;
   locais.forEach(loc=>{const grp=cs.filter(c=>c.local===loc); const uf=grp[0].uf;
@@ -387,15 +390,20 @@ function renderNR(){
 
 // ---- BASE ----
 function renderBase(){
-  let html=`<thead><tr><th>#</th><th>Colaborador</th><th>Função</th><th>NR / Local</th><th class="center">UF</th><th>Jornada (clique nos dias)</th><th class="center">ⓘ</th><th></th></tr></thead><tbody>`;
+  const semCpf=state.colab.filter(c=>!c.cpf).length;
+  document.getElementById("avisoBaseCpf").innerHTML=semCpf>0
+    ?`<div class="aviso">⚠️ <span><b>${semCpf} colaborador(es) sem CPF</b> — preencha abaixo para incluir no export Flash.</span></div>`:"";
+  let html=`<thead><tr><th>#</th><th>Colaborador</th><th>Função</th><th>CPF</th><th>NR / Local</th><th class="center">UF</th><th>Jornada (clique nos dias)</th><th class="center">ⓘ</th><th></th></tr></thead><tbody>`;
   state.colab.forEach((c,idx)=>{
     let grid=`<div class="dias-grid">`;
     for(let d=0;d<7;d++){const on=c.jornada.includes(d); const wk=(d===0||d===6)?"wknd":""; grid+=`<div class="dia-chk ${wk} ${on?'on':''}" data-day="${idx}_${d}">${DIAS_LBL[d]}</div>`;}
     grid+=`</div>`;
     const opts=Object.keys(NR_UF).map(nr=>`<option value="${nr}" ${nr===c.local?"selected":""}>${nrLabel(nr)}</option>`).join("");
+    const cpfMiss=!c.cpf?"cpf-miss":"";
     html+=`<tr><td>${c.id}</td>
       <td><input class="celltxt" value="${(c.nome||'').replace(/"/g,'&quot;')}" data-f="nome" data-i="${idx}"></td>
       <td><input class="celltxt" value="${(c.funcao||'').replace(/"/g,'&quot;')}" data-f="funcao" data-i="${idx}"></td>
+      <td><input class="celltxt ${cpfMiss}" style="width:130px" placeholder="000.000.000-00" value="${(c.cpf||'').replace(/"/g,'&quot;')}" data-f="cpf" data-i="${idx}" title="${cpfMiss?'CPF não cadastrado — necessário para export Flash':''}"></td>
       <td><select class="cellsel ${c.local==='A DEFINIR'?'def':''}" data-nr="${idx}">${opts}</select></td>
       <td class="center">${c.uf?(c.uf==='SP'?'<span class="pill sp">SP</span>':`<span class="pill uf">${c.uf}</span>`):'<span class="pill def">?</span>'}</td>
       <td>${grid}</td>
@@ -455,8 +463,30 @@ function exportarMes(mi){
   const rows=cs.map(c=>{const r=calc(c,mi); return [c.id,c.nome,c.funcao,c.local,c.uf,c.jornadaLabel,r.base,r.nFer,r.ajuste,r.dias,fmtBRL(r.vr),r.va?fmtBRL(r.va):"-",fmtBRL(r.total)];});
   const sVR=cs.reduce((s,c)=>s+calc(c,mi).vr,0), sVA=cs.reduce((s,c)=>s+calc(c,mi).va,0);
   rows.push(["","","","","","","","","","TOTAL",fmtBRL(sVR),fmtBRL(sVA),fmtBRL(sVR+sVA)]);
-  const head=["#","Colaborador","Função","NR/Local","UF","Jornada","Dias jornada","Feriado","Ajuste","Dias VR","VR","VA (SP)","Total"];
+  const head=["#","Colaborador","Função","NR/Local","UF","Jornada","Dias jornada","Feriado","Ajuste","Dias VR","VR","VA","Total"];
   baixar(`<html><head><meta charset="UTF-8"></head><body>`+tabela(`Pedido Recarga — ${nm}/2026 — VR ${fmtBRL(state.rate)}/dia · VA SP ${fmtBRL(state.vaSP)}/mês`,head,rows)+`</body></html>`,`Pedido Recarga - ${nm} 2026.xls`,"application/vnd.ms-excel");
+}
+function exportarFlash(mi){
+  const nm=MESES.find(m=>m.idx===mi).nome;
+  const CNPJ_APABB="58.106.519/0001-39";
+  const cs=state.colab; // todos os colaboradores (sem filtro — Flash precisa da lista completa)
+  const head=["CNPJ","NOME COMPLETO","CPF","MOBILIDADE (R$)","FLEXIVEL (R$)","REFEICAO E ALIMENTACAO (R$)"];
+  const rows=cs.map(c=>{
+    const r=calc(c,mi);
+    return [
+      CNPJ_APABB,
+      c.nome,
+      c.cpf||"",
+      "",
+      r.va||"",
+      r.vr||""
+    ];
+  });
+  let body=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>td,th{font-family:Calibri;font-size:12pt;} th{font-weight:bold;}</style></head><body><table>`;
+  body+=`<tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>`;
+  rows.forEach(r=>{body+=`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`;});
+  body+=`</table></body></html>`;
+  baixar(body,`Flash Beneficios - ${nm} 2026.xls`,"application/vnd.ms-excel");
 }
 function exportarTudo(){
   let body=`<html><head><meta charset="UTF-8"></head><body>`;
@@ -470,7 +500,7 @@ function exportarTudo(){
     const rs=state.colab.map(c=>{const r=calc(c,m.idx); return [c.nome,c.local,c.uf,c.jornadaLabel,r.dias,fmtBRL(r.vr),r.va?fmtBRL(r.va):"-",fmtBRL(r.total)];});
     const sVR=state.colab.reduce((s,c)=>s+calc(c,m.idx).vr,0), sVA=state.colab.reduce((s,c)=>s+calc(c,m.idx).va,0);
     rs.push(["","","","","TOTAL",fmtBRL(sVR),fmtBRL(sVA),fmtBRL(sVR+sVA)]);
-    body+=tabela(`${m.nome}/2026`,["Colaborador","NR/Local","UF","Jornada","Dias VR","VR","VA (SP)","Total"],rs);
+    body+=tabela(`${m.nome}/2026`,["Colaborador","NR/Local","UF","Jornada","Dias VR","VR","VA","Total"],rs);
   });
   body+=`</body></html>`;
   baixar(body,`Previsao Recarga - Jul-Dez 2026.xls`,"application/vnd.ms-excel");
@@ -481,6 +511,7 @@ document.getElementById("mesSel").innerHTML=MESES.map(m=>`<option value="${m.idx
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active")); document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active")); t.classList.add("active"); document.getElementById("panel-"+t.dataset.p).classList.add("active");}));
 ["rate","vaSP","mesSel","fNR","fJor","fNome"].forEach(id=>document.getElementById(id).addEventListener("input",render));
 document.getElementById("btnSalvarMes").addEventListener("click",()=>exportarMes(mesAtual()));
+document.getElementById("btnFlash").addEventListener("click",()=>exportarFlash(mesAtual()));
 document.getElementById("btnBackup").addEventListener("click",()=>baixar(JSON.stringify(state,null,2),`backup-val-refeicao-alimentacao-${ANO}.json`,"application/json"));
 document.getElementById("btnRestaurar").addEventListener("click",()=>document.getElementById("fileInput").click());
 document.getElementById("fileInput").addEventListener("change",e=>{const f=e.target.files[0]; if(!f)return; const rd=new FileReader(); rd.onload=ev=>{try{const o=JSON.parse(ev.target.result); if(o.colab&&o.feriados){state=o; salvar(); document.getElementById("rate").value=state.rate||46; document.getElementById("vaSP").value=state.vaSP||240; atualizarFiltros(); render(); alert("Backup restaurado!");}else alert("Arquivo inválido.");}catch(err){alert("Erro ao ler arquivo.");}}; rd.readAsText(f);});
