@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vale Refeição &amp; Alimentação — APABB</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Quicksand:wght@500;600;700&display=swap');
   :root{
@@ -472,28 +473,29 @@ function exportarMes(mi){
   baixar(`<html><head><meta charset="UTF-8"></head><body>`+tabela(`Pedido Recarga — ${nm}/2026 — VR ${fmtBRL(state.rate)}/dia · VA SP ${fmtBRL(state.vaSP)}/mês`,head,rows)+`</body></html>`,`Pedido Recarga - ${nm} 2026.xls`,"application/vnd.ms-excel");
 }
 function exportarFlash(mi){
+  if(typeof XLSX==='undefined'){alert('Biblioteca SheetJS ainda carregando — aguarde um instante e tente novamente.'); return;}
   const nm=MESES.find(m=>m.idx===mi).nome;
   const CNPJ_APABB="58.106.519/0001-39";
-  const cs=state.colab; // todos (sem filtro — Flash precisa da lista completa)
-  // Ordem exata do template Flash: ALIMENTACAO (col4) | FLEXIVEL (col5) | REFEICAO E ALIMENTACAO (col6) | PREMIACAO VIRTUAL (col7)
+  const cs=state.colab;
+  // Ordem exata do template Flash
   const head=["CNPJ","NOME COMPLETO","CPF","ALIMENTACAO (R$)","FLEXIVEL (R$)","REFEICAO E ALIMENTACAO (R$)","PREMIACAO VIRTUAL (R$)"];
-  const rows=cs.map(c=>{
+  const dataRows=cs.map(c=>{
     const r=calc(c,mi);
-    return [
-      CNPJ_APABB,
-      c.nome,
-      c.cpf||"",
-      r.va||"",        // col4 ALIMENTACAO = VA (R$240 fixo mensal)
-      r.vr||"",        // col5 FLEXIVEL = VR (refeição diária × dias úteis)
-      "",              // col6 REFEICAO E ALIMENTACAO = não utilizado
-      ""               // col7 PREMIACAO VIRTUAL = não utilizado
-    ];
-  }).filter(row=>row[3]!==''||row[4]!==''); // remove quem não tem nenhum benefício no mês
-  let body=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>td,th{font-family:Calibri;font-size:12pt;mso-number-format:"0.00";} th{font-weight:bold;}</style></head><body><table>`;
-  body+=`<tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>`;
-  rows.forEach(r=>{body+=`<tr>${r.map((c,i)=>i>=4&&c!==''?`<td x:num>${c}</td>`:`<td>${c}</td>`).join('')}</tr>`;});
-  body+=`</table></body></html>`;
-  baixar(body,`Flash Beneficios - ${nm} 2026.xls`,"application/vnd.ms-excel");
+    const va=r.va>0?r.va:null;
+    const vr=r.vr>0?r.vr:null;
+    if(!va&&!vr) return null;
+    return [CNPJ_APABB, c.nome, c.cpf||"", va, vr, null, null];
+  }).filter(Boolean);
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([head,...dataRows]);
+  // Forçar CPF (col C) como texto para não distorcer o formato XXX.XXX.XXX-XX
+  const rng=XLSX.utils.decode_range(ws['!ref']);
+  for(let i=1;i<=rng.e.r;i++){
+    const cell=ws[XLSX.utils.encode_cell({r:i,c:2})];
+    if(cell){cell.t='s'; cell.z='@';}
+  }
+  XLSX.utils.book_append_sheet(wb,ws,"Beneficios");
+  XLSX.writeFile(wb,`Flash Beneficios - ${nm} 2026.xlsx`);
 }
 function salvarPDF(){
   document.body.classList.add('pdf-mes');
