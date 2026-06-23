@@ -79,7 +79,11 @@
   .va-tag{color:#b8860b;font-weight:800;}
   .pill.va-only{background:#fff6dc;color:#b8860b;border:1px solid #f0c050;}
   input.cpf-miss{border-color:var(--laranja)!important;background:var(--laranja-cl)!important;}
-  @media print{.toolbar .btn,.tabs,.row-actions,.aviso button{display:none!important;} .panel{display:block!important;} header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+  @media print{.toolbar .btn,.tabs,.row-actions,.aviso button{display:none!important;} .panel{display:block!important;} header{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    body.pdf-mes .toolbar,body.pdf-mes .tabs,body.pdf-mes #panel-total,body.pdf-mes #panel-nr,body.pdf-mes #panel-base,body.pdf-mes #panel-feriados{display:none!important;}
+    body.pdf-mes #panel-mes{display:block!important;}
+    body.pdf-mes .hint,body.pdf-mes .aviso{display:none!important;}
+    body.pdf-mes table{page-break-inside:auto;} body.pdf-mes tr{page-break-inside:avoid;}}
 </style>
 </head>
 <body>
@@ -119,6 +123,7 @@
   <div class="spacer"></div>
   <div class="fld"><label>&nbsp;</label><button class="btn verde" id="btnSalvarMes">💾 Exportar mês selecionado</button></div>
   <div class="fld"><label>&nbsp;</label><button class="btn amarelo" id="btnFlash">⚡ Exportar planilha Flash</button></div>
+  <div class="fld"><label>&nbsp;</label><button class="btn laranja" id="btnPDF">🖨 Salvar PDF</button></div>
   <div class="fld"><label>&nbsp;</label><button class="btn cinza" id="btnBackup">⬇ Backup</button></div>
   <div class="fld"><label>&nbsp;</label><button class="btn cinza" id="btnRestaurar">⬆ Restaurar</button><input type="file" id="fileInput" accept=".json" style="display:none"></div>
 </div>
@@ -469,8 +474,8 @@ function exportarMes(mi){
 function exportarFlash(mi){
   const nm=MESES.find(m=>m.idx===mi).nome;
   const CNPJ_APABB="58.106.519/0001-39";
-  const cs=state.colab; // todos os colaboradores (sem filtro — Flash precisa da lista completa)
-  const head=["CNPJ","NOME COMPLETO","CPF","MOBILIDADE (R$)","FLEXIVEL (R$)","REFEICAO E ALIMENTACAO (R$)"];
+  const cs=state.colab; // todos (sem filtro — Flash precisa da lista completa)
+  const head=["CNPJ","NOME COMPLETO","CPF","MOBILIDADE (R$)","FLEXIVEL (R$)","ALIMENTAÇÃO (R$)"];
   const rows=cs.map(c=>{
     const r=calc(c,mi);
     return [
@@ -478,15 +483,20 @@ function exportarFlash(mi){
       c.nome,
       c.cpf||"",
       "",
-      r.va||"",
-      r.vr||""
+      r.vr||"",        // FLEXIVEL = VR (refeição diária × dias úteis)
+      r.va||""         // ALIMENTAÇÃO = VA (R$240 fixo mensal)
     ];
-  });
-  let body=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>td,th{font-family:Calibri;font-size:12pt;} th{font-weight:bold;}</style></head><body><table>`;
+  }).filter(row=>row[4]!==''||row[5]!==''); // remove quem não tem nenhum benefício no mês
+  let body=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>td,th{font-family:Calibri;font-size:12pt;mso-number-format:"0.00";} th{font-weight:bold;}</style></head><body><table>`;
   body+=`<tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>`;
-  rows.forEach(r=>{body+=`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`;});
+  rows.forEach(r=>{body+=`<tr>${r.map((c,i)=>i>=4&&c!==''?`<td x:num>${c}</td>`:`<td>${c}</td>`).join('')}</tr>`;});
   body+=`</table></body></html>`;
   baixar(body,`Flash Beneficios - ${nm} 2026.xls`,"application/vnd.ms-excel");
+}
+function salvarPDF(){
+  document.body.classList.add('pdf-mes');
+  window.onafterprint=()=>{document.body.classList.remove('pdf-mes'); window.onafterprint=null;};
+  window.print();
 }
 function exportarTudo(){
   let body=`<html><head><meta charset="UTF-8"></head><body>`;
@@ -512,6 +522,7 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{doc
 ["rate","vaSP","mesSel","fNR","fJor","fNome"].forEach(id=>document.getElementById(id).addEventListener("input",render));
 document.getElementById("btnSalvarMes").addEventListener("click",()=>exportarMes(mesAtual()));
 document.getElementById("btnFlash").addEventListener("click",()=>exportarFlash(mesAtual()));
+document.getElementById("btnPDF").addEventListener("click",salvarPDF);
 document.getElementById("btnBackup").addEventListener("click",()=>baixar(JSON.stringify(state,null,2),`backup-val-refeicao-alimentacao-${ANO}.json`,"application/json"));
 document.getElementById("btnRestaurar").addEventListener("click",()=>document.getElementById("fileInput").click());
 document.getElementById("fileInput").addEventListener("change",e=>{const f=e.target.files[0]; if(!f)return; const rd=new FileReader(); rd.onload=ev=>{try{const o=JSON.parse(ev.target.result); if(o.colab&&o.feriados){state=o; salvar(); document.getElementById("rate").value=state.rate||46; document.getElementById("vaSP").value=state.vaSP||240; atualizarFiltros(); render(); alert("Backup restaurado!");}else alert("Arquivo inválido.");}catch(err){alert("Erro ao ler arquivo.");}}; rd.readAsText(f);});
