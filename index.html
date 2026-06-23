@@ -475,18 +475,20 @@ function exportarFlash(mi){
   const nm=MESES.find(m=>m.idx===mi).nome;
   const CNPJ_APABB="58.106.519/0001-39";
   const cs=state.colab; // todos (sem filtro — Flash precisa da lista completa)
-  const head=["CNPJ","NOME COMPLETO","CPF","MOBILIDADE (R$)","FLEXIVEL (R$)","ALIMENTAÇÃO (R$)"];
+  // Ordem exata do template Flash: ALIMENTACAO (col4) | FLEXIVEL (col5) | REFEICAO E ALIMENTACAO (col6) | PREMIACAO VIRTUAL (col7)
+  const head=["CNPJ","NOME COMPLETO","CPF","ALIMENTACAO (R$)","FLEXIVEL (R$)","REFEICAO E ALIMENTACAO (R$)","PREMIACAO VIRTUAL (R$)"];
   const rows=cs.map(c=>{
     const r=calc(c,mi);
     return [
       CNPJ_APABB,
       c.nome,
       c.cpf||"",
-      "",
-      r.vr||"",        // FLEXIVEL = VR (refeição diária × dias úteis)
-      r.va||""         // ALIMENTAÇÃO = VA (R$240 fixo mensal)
+      r.va||"",        // col4 ALIMENTACAO = VA (R$240 fixo mensal)
+      r.vr||"",        // col5 FLEXIVEL = VR (refeição diária × dias úteis)
+      "",              // col6 REFEICAO E ALIMENTACAO = não utilizado
+      ""               // col7 PREMIACAO VIRTUAL = não utilizado
     ];
-  }).filter(row=>row[4]!==''||row[5]!==''); // remove quem não tem nenhum benefício no mês
+  }).filter(row=>row[3]!==''||row[4]!==''); // remove quem não tem nenhum benefício no mês
   let body=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>td,th{font-family:Calibri;font-size:12pt;mso-number-format:"0.00";} th{font-weight:bold;}</style></head><body><table>`;
   body+=`<tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>`;
   rows.forEach(r=>{body+=`<tr>${r.map((c,i)=>i>=4&&c!==''?`<td x:num>${c}</td>`:`<td>${c}</td>`).join('')}</tr>`;});
